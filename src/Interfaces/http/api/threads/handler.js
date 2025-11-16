@@ -1,4 +1,5 @@
 const AddThreadUseCase = require('../../../../Applications/use_case/AddThreadUseCase');
+const GetThreadDetailUseCase = require('../../../../Applications/use_case/GetThreadDetailUseCase');
 const AddCommentUseCase = require('../../../../Applications/use_case/AddCommentUseCase');
 
 class ThreadsHandler {
@@ -40,6 +41,35 @@ class ThreadsHandler {
       }
     });
     response.code(201);
+    return response;
+  }
+
+  async getThreadDetailHandler(request, h) {
+    const getThreadDetailUseCase = this._container.getInstance(GetThreadDetailUseCase.name);
+    const { threadId } = request.params;
+    const { thread, comments } = await getThreadDetailUseCase.execute(threadId);
+
+    const mappedThread = {
+      id: thread.id,
+      title: thread.title,
+      body: thread.body,
+      date: thread.date,
+      username: thread.username,
+      comments: comments.map(comment => ({
+        id: comment.id,
+        username: comment.username,
+        date: comment.date,
+        content: comment.content
+      }))
+    };
+
+    const response = h.response({
+      status: 'success',
+      data: {
+        thread: mappedThread
+      }
+    });
+    response.code(200);
     return response;
   }
 }
