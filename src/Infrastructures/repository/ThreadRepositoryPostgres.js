@@ -70,6 +70,25 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     return result.rows[0];
   }
 
+  async addReply(replyUser) {
+    const { content, owner, threadId, commentId } = replyUser;
+    const id = `reply-${this._idGenerator()}`;
+		const timestamp = new Date().toISOString();
+    
+    const query = {
+      text: `
+        INSERT INTO t_replies (id, content, timestamp, owner, thread_id, comment_id, is_deleted)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, content, owner
+      `,
+      values: [id, content, timestamp, owner, threadId, commentId, false],
+    };
+
+    const result = await this._pool.query(query);
+
+    return result.rows[0];
+  }
+
   async deleteCommentThread(commentId) {
     const query = {
       text: `
@@ -82,7 +101,7 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     };
 
     const result = await this._pool.query(query);
-    
+
     return result.rows[0];
   }
 
