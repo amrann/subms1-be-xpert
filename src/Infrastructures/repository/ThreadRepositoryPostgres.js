@@ -1,4 +1,5 @@
 const NotFoundError = require('../../Commons/exceptions/NotFoundError');
+const AuthorizationError = require('../../Commons/exceptions/AuthorizationError');
 const ThreadRepository = require('../../Domains/threads/ThreadRepository');
 
 class ThreadRepositoryPostgres extends ThreadRepository {
@@ -33,7 +34,7 @@ class ThreadRepositoryPostgres extends ThreadRepository {
       values: [threadId],
     };
     const commentsQuery = {
-      text: `SELECT c.id, u.username, c.timestamp as date, c.content
+      text: `SELECT c.id, u.username, c.timestamp as date, c.content, c.is_delete
             FROM t_comments c
             JOIN users u ON c.owner = u.id
             WHERE c.thread_id = $1
@@ -54,14 +55,34 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     const { content, owner, threadId } = commentUser;
     const id = `comment-${this._idGenerator()}`;
 		const timestamp = new Date().toISOString();
-
+    
     const query = {
-      text: 'INSERT INTO t_comments VALUES($1, $2, $3, $4, $5) RETURNING id, content, owner, thread_id',
-      values: [id, content, timestamp, owner, threadId],
+      text: `
+        INSERT INTO t_comments (id, content, timestamp, owner, thread_id, is_delete)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, content, owner, thread_id
+      `,
+      values: [id, content, timestamp, owner, threadId, false],
     };
 
     const result = await this._pool.query(query);
 
+    return result.rows[0];
+  }
+
+  async deleteCommentThread(commentId) {
+    const query = {
+      text: `
+        UPDATE t_comments
+        SET is_delete = TRUE
+        WHERE id = $1
+        RETURNING id, is_delete
+      `,
+      values: [commentId],
+    };
+
+    const result = await this._pool.query(query);
+    
     return result.rows[0];
   }
 
@@ -75,6 +96,35 @@ class ThreadRepositoryPostgres extends ThreadRepository {
       throw new NotFoundError('thread tidak ditemukan');
     }
   }
+
+  async checkCommentExist(id) {
+    const query = {
+      text: 'SELECT * FROM t_comments WHERE id = $1',
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+    if (result.rows.length === 0) {
+      throw new NotFoundError('comment tidak ditemukan');
+    }
+  }
+
+  async checkOwner(threadId, owner) {
+    const query = {
+			text: 'SELECT * FROM t_threads WHERE id = $1',
+			values: [threadId],
+		};
+
+		const result = await this._pool.query(query);
+
+    if (result.rows.length) {
+      const { owner: threadOwner } = result.rows[0];
+      if (threadOwner !== owner) {
+        throw new AuthorizationError('Anda tidak berhak mengakses thread ini');
+      }
+    } else {
+      throw new NotFoundError('Thread tidak ditemukan');
+    }
+	}
 }
 
 module.exports = ThreadRepositoryPostgres;

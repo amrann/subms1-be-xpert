@@ -1,6 +1,7 @@
 const AddThreadUseCase = require('../../../../Applications/use_case/AddThreadUseCase');
 const GetThreadDetailUseCase = require('../../../../Applications/use_case/GetThreadDetailUseCase');
 const AddCommentUseCase = require('../../../../Applications/use_case/AddCommentUseCase');
+const DeleteCommentUseCase = require('../../../../Applications/use_case/DeleteCommentUseCase');
 
 class ThreadsHandler {
   constructor(container) {
@@ -59,7 +60,7 @@ class ThreadsHandler {
         id: comment.id,
         username: comment.username,
         date: comment.date,
-        content: comment.content
+        content: comment.is_delete ? '**komentar telah dihapus**' : comment.content
       }))
     };
 
@@ -72,7 +73,23 @@ class ThreadsHandler {
     response.code(200);
     return response;
   }
-}
 
+  async deleteCommentHandler(request, h) {
+    const deleteCommentUseCase = this._container.getInstance(DeleteCommentUseCase.name);
+    const { threadId, commentId } = request.params;
+    const { id: owner } = request.auth.credentials;
+    await deleteCommentUseCase.execute({
+      threadId, 
+      commentId,
+      owner
+    });
+
+    const response = h.response({
+      status: 'success'
+    })
+    response.code(200);
+    return response;
+  }
+}
 
 module.exports = ThreadsHandler;
