@@ -41,13 +41,24 @@ class ThreadRepositoryPostgres extends ThreadRepository {
             ORDER BY c.timestamp ASC`,
       values: [threadId],
     };
+    const repliesQuery = {
+      text: `SELECT r.id, r.comment_id, r.timestamp AS date, r.content, r.is_deleted, u.username
+            FROM t_replies r
+            JOIN users u ON r.owner = u.id
+            WHERE r.thread_id = $1
+            ORDER BY r.timestamp ASC`,
+      values: [threadId],
+    };
+
 
     const threadResult = await this._pool.query(threadQuery);
     const commentsResult = await this._pool.query(commentsQuery);
+    const repliesResult = await this._pool.query(repliesQuery);
 
     return {
       thread: threadResult.rows[0],
-      comments: commentsResult.rows
+      comments: commentsResult.rows,
+      replies: repliesResult.rows
     };
   }
 
@@ -104,6 +115,22 @@ class ThreadRepositoryPostgres extends ThreadRepository {
 
     return result.rows[0];
   }
+  
+  async deleteReplyComment(replyId) {
+    const query = {
+      text: `
+        UPDATE t_replies
+        SET is_deleted = TRUE
+        WHERE id = $1
+        RETURNING id, is_deleted
+      `,
+      values: [replyId],
+    };
+
+    const result = await this._pool.query(query);
+
+    return result.rows[0];
+  }
 
   async checkThreadExist(id) {
     const query = {
@@ -127,21 +154,39 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     }
   }
 
-  async checkOwner(threadId, owner) {
+  async checkOwnerOfComment(commentId, owner) {
     const query = {
-			text: 'SELECT * FROM t_threads WHERE id = $1',
-			values: [threadId],
+			text: 'SELECT * FROM t_comments WHERE id = $1',
+			values: [commentId],
 		};
 
 		const result = await this._pool.query(query);
 
     if (result.rows.length) {
-      const { owner: threadOwner } = result.rows[0];
-      if (threadOwner !== owner) {
-        throw new AuthorizationError('Anda tidak berhak mengakses thread ini');
+      const { owner: commentOwner } = result.rows[0];
+      if (commentOwner !== owner) {
+        throw new AuthorizationError('Anda tidak berhak mengakses comment ini');
       }
     } else {
-      throw new NotFoundError('Thread tidak ditemukan');
+      throw new NotFoundError('Comment tidak ditemukan');
+    }
+	}
+
+  async checkOwnerOfReply(replyId, owner) {
+    const query = {
+			text: 'SELECT * FROM t_replies WHERE id = $1',
+			values: [replyId],
+		};
+
+		const result = await this._pool.query(query);
+
+    if (result.rows.length) {
+      const { owner: replyOwner } = result.rows[0];
+      if (replyOwner !== owner) {
+        throw new AuthorizationError('Anda tidak berhak mengakses reply ini');
+      }
+    } else {
+      throw new NotFoundError('Reply tidak ditemukan');
     }
 	}
 }

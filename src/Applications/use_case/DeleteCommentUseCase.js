@@ -10,8 +10,7 @@ class DeleteCommentUseCase {
     const { threadId, commentId, owner } = commentedUser;
 
     await this._threadRepository.checkThreadExist(threadId);
-    await this._threadRepository.checkCommentExist(commentId);
-    await this._threadRepository.checkOwner(threadId, owner);
+    await this._threadRepository.checkOwnerOfComment(commentId, owner);
     
     return this._threadRepository.deleteCommentThread(commentId);
   }
