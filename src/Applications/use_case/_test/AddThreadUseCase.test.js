@@ -1,12 +1,9 @@
-const RegisterUser = require('../../../Domains/users/entities/RegisterUser');
 const ThreadUser = require('../../../Domains/threads/entities/ThreadUser');
 const ThreadRepository = require('../../../Domains/threads/ThreadRepository');
 const AddThreadUseCase = require('../AddThreadUseCase');
 
 describe('AddThreadUseCase', () => {
-
   it('should orchestrate the add thread action correctly', async () => {
-
     const useCasePayload = {
       title: 'title thread',
       body: 'body thread',
@@ -39,6 +36,5 @@ describe('AddThreadUseCase', () => {
         owner: useCasePayload.owner,
       }));
     expect(mockThreadRepository.addThread).toHaveBeenCalledTimes(1);
-
   });
 });

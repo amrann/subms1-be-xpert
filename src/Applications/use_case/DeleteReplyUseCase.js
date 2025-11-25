@@ -1,8 +1,10 @@
-const RepliedUser = require('../../Domains/threads/entities/RepliedUser');
+const RepliedUser = require('../../Domains/replies/entities/RepliedUser');
 
 class DeleteReplyUseCase {
-  constructor({ threadRepository }) {
+  constructor({ threadRepository, commentRepository, replyRepository }) {
     this._threadRepository = threadRepository;
+    this._commentRepository = commentRepository;
+    this._replyRepository = replyRepository;
   }
 
   async execute(useCasePayload) {
@@ -10,10 +12,10 @@ class DeleteReplyUseCase {
     const { threadId, commentId, replyId, owner } = repliedUser;
 
     await this._threadRepository.checkThreadExist(threadId);
-    await this._threadRepository.checkCommentExist(commentId);
-    await this._threadRepository.checkOwnerOfReply(replyId, owner);
+    await this._commentRepository.checkCommentExist(commentId);
+    await this._replyRepository.checkOwnerOfReply(replyId, owner);
     
-    return this._threadRepository.deleteReplyComment(replyId);
+    return this._replyRepository.deleteReplyComment(replyId);
   }
 
 }

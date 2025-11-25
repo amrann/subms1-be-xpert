@@ -3,12 +3,12 @@ class ThreadRepository {
     throw new Error('THREAD_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   }
 
-  async addComment(commentUser) {
-    throw new Error('COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
+  async getDetailThread(threadId) {
+    throw new Error('THREAD_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   }
 
   async checkThreadExist(id) {
-    throw new Error('THREAD_USER.NOT_FOUND');
+    throw new Error('THREAD_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   }
 }
 module.exports = ThreadRepository;

@@ -1,8 +1,10 @@
-const ReplyUser = require('../../Domains/threads/entities/ReplyUser');
+const ReplyUser = require('../../Domains/replies/entities/ReplyUser');
 
 class AddReplyCommentUseCase {
-  constructor({ threadRepository }) {
+  constructor({ threadRepository, commentRepository, replyRepository }) {
     this._threadRepository = threadRepository;
+    this._commentRepository = commentRepository;
+    this._replyRepository = replyRepository;
   }
 
   async execute(useCasePayload) {
@@ -10,9 +12,9 @@ class AddReplyCommentUseCase {
     const { threadId, commentId } = replyUser;
 
     await this._threadRepository.checkThreadExist(threadId);
-    await this._threadRepository.checkCommentExist(commentId);
+    await this._commentRepository.checkCommentExist(commentId);
 
-    return this._threadRepository.addReply(replyUser);
+    return this._replyRepository.addReply(replyUser);
   }
 }
 
