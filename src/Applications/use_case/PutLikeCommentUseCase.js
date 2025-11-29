@@ -9,10 +9,18 @@ class PutLikeCommentUseCase {
 
   async execute(useCasePayload) {
     const likeComment = new LikeComment(useCasePayload);
-    await this._threadRepository.checkThreadExist(likeComment.threadId);
-    await this._commentRepository.checkCommentExist(likeComment.commentId);
+    const { owner, threadId, commentId } = likeComment;
+    
+    await this._threadRepository.checkThreadExist(threadId);
+    await this._commentRepository.checkCommentExist(commentId);
 
-    return this._likeCommentRepository.likeUnlikeComment(likeComment);
+    const isLiked = await this._likeCommentRepository.checkCommentLike(owner, commentId);
+
+    if (isLiked) {
+      await this._likeCommentRepository.deleteLikeComment(owner, commentId);
+    } else {
+      await this._likeCommentRepository.putLikeComment(owner, threadId, commentId);
+    }
   }
 }
 

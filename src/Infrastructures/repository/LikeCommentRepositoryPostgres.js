@@ -44,18 +44,6 @@ class LikeCommentRepositoryPostgres extends LikeCommentRepository {
 
     await this._pool.query(query);
   }
-
-  async likeUnlikeComment(likeComment) {
-    const { owner, threadId, commentId } = likeComment;
-
-    const isLiked = await this.checkCommentLike(owner, commentId);
-
-    if (isLiked) {
-      await this.deleteLikeComment(owner, commentId);
-    } else {
-      const like = await this.putLikeComment(owner, threadId, commentId);
-    }
-  }
 }
 
 module.exports = LikeCommentRepositoryPostgres;

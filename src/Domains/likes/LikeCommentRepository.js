@@ -1,5 +1,4 @@
 class LikeCommentRepository {
-	
   async checkCommentLike(owner, commentId) {
     throw new Error('LIKE_COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   }
@@ -11,10 +10,6 @@ class LikeCommentRepository {
   async deleteLikeComment(owner, commentId) {
     throw new Error('LIKE_COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   }
-
-  async likeUnlikeComment(likeComment) {
-    throw new Error('LIKE_COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
-  }
-
 }
+
 module.exports = LikeCommentRepository;
