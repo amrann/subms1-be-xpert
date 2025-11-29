@@ -49,17 +49,31 @@ class ThreadRepositoryPostgres extends ThreadRepository {
       values: [threadId],
     };
 
-
     const threadResult = await this._pool.query(threadQuery);
     const commentsResult = await this._pool.query(commentsQuery);
     const repliesResult = await this._pool.query(repliesQuery);
 
+    const commentIds = commentsResult.rows.map(c => c.id);
+
+    const likeCountQuery = {
+      text: `
+        SELECT comment_id, COUNT(*) AS like_count
+        FROM t_comments_likes
+        WHERE comment_id = ANY($1)
+        GROUP BY comment_id
+      `,
+      values: [commentIds],
+    };
+
+    const likeCountResult = await this._pool.query(likeCountQuery);
+
     return {
       thread: threadResult.rows[0],
       comments: commentsResult.rows,
-      replies: repliesResult.rows
+      replies: repliesResult.rows,
+      likes: likeCountResult.rows
     };
-  }
+  };
 
   async checkThreadExist(id) {
     const query = {

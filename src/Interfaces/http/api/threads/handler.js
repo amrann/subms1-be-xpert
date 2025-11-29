@@ -27,7 +27,12 @@ class ThreadsHandler {
   async getThreadDetailHandler(request, h) {
     const getThreadDetailUseCase = this._container.getInstance(GetThreadDetailUseCase.name);
     const { threadId } = request.params;
-    const { thread, comments, replies } = await getThreadDetailUseCase.execute(threadId);
+    const { thread, comments, replies, likes } = await getThreadDetailUseCase.execute(threadId);
+
+    const likeCounts = {};
+    likes.forEach(like => {
+      likeCounts[like.comment_id] = Number(like.like_count);
+    });
 
     const mappedThread = {
       id: thread.id,
@@ -40,6 +45,7 @@ class ThreadsHandler {
         username: comment.username,
         date: comment.date,
         content: comment.is_delete ? '**komentar telah dihapus**' : comment.content,
+        likeCount: likeCounts[comment.id] || 0,
         replies: replies
           .filter(reply => reply.comment_id === comment.id)
           .map(reply => ({
