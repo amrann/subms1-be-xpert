@@ -45,8 +45,8 @@ class LikeCommentRepositoryPostgres extends LikeCommentRepository {
     await this._pool.query(query);
   }
 
-  async likeUnlikeComment(commentUser) {
-    const { owner, threadId, commentId } = commentUser;
+  async likeUnlikeComment(likeComment) {
+    const { owner, threadId, commentId } = likeComment;
 
     const isLiked = await this.checkCommentLike(owner, commentId);
 
