@@ -1,4 +1,7 @@
 const pool = require('../../database/postgres/pool');
+const RepliesTableTestHelper = require('../../../../tests/RepliesTableTestHelper');
+const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
+const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const AuthenticationsTableTestHelper = require('../../../../tests/AuthenticationsTableTestHelper');
 const container = require('../../container');
@@ -6,13 +9,22 @@ const createServer = require('../createServer');
 const AuthenticationTokenManager = require('../../../Applications/security/AuthenticationTokenManager');
 
 describe('/authentications endpoint', () => {
-  afterAll(async () => {
-    await pool.end();
+  beforeEach(async () => {
+    await CommentsTableTestHelper.cleanTable();
+    await RepliesTableTestHelper.cleanTable();
+    await ThreadsTableTestHelper.cleanTable();
+    await UsersTableTestHelper.cleanTable();
   });
 
   afterEach(async () => {
+    await CommentsTableTestHelper.cleanTable();
+    await RepliesTableTestHelper.cleanTable();
+    await ThreadsTableTestHelper.cleanTable();
     await UsersTableTestHelper.cleanTable();
-    await AuthenticationsTableTestHelper.cleanTable();
+  });
+
+  afterAll(async () => {
+    await pool.end();
   });
 
   describe('when POST /authentications', () => {
