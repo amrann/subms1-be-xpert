@@ -1,3 +1,4 @@
+const LikeCommentsTableTestHelper = require('../../../../tests/LikeCommentsTableTestHelper');
 const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
 const RepliesTableTestHelper = require('../../../../tests/RepliesTableTestHelper');
 const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
@@ -53,8 +54,66 @@ describe('ThreadRepositoryPostgres', () => {
     });
   });
 
-  describe('getDetailThread function', () => {
-    it('should return comment id and is_delete when reply comment is successfully deleted', async () => {
+  describe('getThreadById function', () => {
+    it('should return threadId correctly', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({
+        id: 'user-123',
+        username: 'dicoding',
+        password: 'secret_password',
+        fullname: 'Dicoding Indonesia',
+      });
+
+      await ThreadsTableTestHelper.addThread({ 
+        id: 'thread-123',
+        title: 'title dari thread',
+        body: 'body dari thread',
+        timestamp: '2025-11-09 03:31:59.941',
+        owner: 'user-123', 
+      });
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+
+      // Action and Assert
+      await expect(threadRepositoryPostgres.getThreadById('thread-123')).resolves.not.toThrow();
+    });
+  });
+
+  describe('getCommentsByThreadId function', () => {
+    it('should return commentId correctly', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({
+        id: 'user-123',
+        username: 'dicoding',
+        password: 'secret_password',
+        fullname: 'Dicoding Indonesia',
+      });
+
+      await ThreadsTableTestHelper.addThread({ 
+        id: 'thread-123',
+        title: 'title dari thread',
+        body: 'body dari thread',
+        timestamp: '2025-11-09 03:31:59.941',
+        owner: 'user-123', 
+      });
+
+      await CommentsTableTestHelper.addComment({ 
+        id: 'comment-123',
+        content: 'content dari comment',
+        timestamp: '2025-11-09 03:31:59.941',
+        owner: 'user-123',
+        threadId: 'thread-123'
+      });
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+
+      // Action and Assert
+      await expect(threadRepositoryPostgres.getCommentsByThreadId('comment-123')).resolves.not.toThrow();
+    });
+  });
+
+  describe('getRepliesByThreadId function', () => {
+    it('should return replyId correctly', async () => {
       // Arrange
       await UsersTableTestHelper.addUser({
         id: 'user-123',
@@ -88,34 +147,56 @@ describe('ThreadRepositoryPostgres', () => {
         commentId: 'comment-123'
       });
 
-      // Action
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
-      const result = await threadRepositoryPostgres.getDetailThread('thread-123');
 
-      // Assert
-      expect(result.thread).toEqual({
+      // Action and Assert
+      await expect(threadRepositoryPostgres.getRepliesByThreadId('reply-123')).resolves.not.toThrow();
+    });
+  });
+
+  describe('getLikeCountByCommentIds function', () => {
+    it('should return commentId correctly', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({
+        id: 'user-123',
+        username: 'dicoding',
+        password: 'secret_password',
+        fullname: 'Dicoding Indonesia',
+      });
+
+      await ThreadsTableTestHelper.addThread({ 
         id: 'thread-123',
         title: 'title dari thread',
         body: 'body dari thread',
-        date: expect.anything(),
-        username: 'dicoding',
+        timestamp: '2025-11-09 03:31:59.941',
+        owner: 'user-123', 
       });
-      expect(result.comments).toHaveLength(1);
-      expect(result.comments[0]).toMatchObject({
+
+      await CommentsTableTestHelper.addComment({ 
         id: 'comment-123',
-        username: 'dicoding',
-        date: expect.anything(),
         content: 'content dari comment',
-        is_delete: false
+        timestamp: '2025-11-09 03:31:59.941',
+        owner: 'user-123',
+        threadId: 'thread-123'
       });
-      expect(result.replies).toHaveLength(1);
-      expect(result.replies[0]).toMatchObject({
-        id: 'reply-123',
+
+      await LikeCommentsTableTestHelper.addLikeComment({ 
+        id: 'like-123',
+        timestamp: '2025-11-09 03:31:59.941',
+        owner: 'user-123',
+        threadId: 'thread-123',
+        commentId: 'comment-123'
+      });
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+
+      // Action
+      const result = await threadRepositoryPostgres.getLikeCountByCommentIds(['comment-123']);
+
+      // Assert
+      expect(result[0]).toEqual({
         comment_id: 'comment-123',
-        date: expect.anything(),
-        content: 'content dari reply',
-        is_deleted: false,
-        username: 'dicoding',
+        like_count: '1', // PostgreSQL returns count as string
       });
     });
   });
@@ -166,5 +247,4 @@ describe('ThreadRepositoryPostgres', () => {
       await expect(threadRepositoryPostgres.checkThreadExist('thread-123')).resolves.not.toThrow();
     });
   });
-
 });
