@@ -23,39 +23,56 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     return result.rows[0];
   }
 
-  async getDetailThread(threadId) {
-    const threadQuery = {
-      text: `SELECT t_threads.id, t_threads.title, t_threads.body, 
-                    t_threads.timestamp as date, u.username
-            FROM t_threads
-            JOIN users u ON t_threads.owner = u.id
-            WHERE t_threads.id = $1`,
-      values: [threadId],
-    };
-    const commentsQuery = {
-      text: `SELECT c.id, u.username, c.timestamp as date, c.content, c.is_delete
-            FROM t_comments c
-            JOIN users u ON c.owner = u.id
-            WHERE c.thread_id = $1
-            ORDER BY c.timestamp ASC`,
-      values: [threadId],
-    };
-    const repliesQuery = {
-      text: `SELECT r.id, r.comment_id, r.timestamp AS date, r.content, r.is_deleted, u.username
-            FROM t_replies r
-            JOIN users u ON r.owner = u.id
-            WHERE r.thread_id = $1
-            ORDER BY r.timestamp ASC`,
+  async getThreadById(threadId) {
+    const query = {
+      text: `
+        SELECT t_threads.id, t_threads.title, t_threads.body, 
+          t_threads.timestamp as date, u.username
+        FROM t_threads
+        JOIN users u ON t_threads.owner = u.id
+        WHERE t_threads.id = $1
+      `,
       values: [threadId],
     };
 
-    const threadResult = await this._pool.query(threadQuery);
-    const commentsResult = await this._pool.query(commentsQuery);
-    const repliesResult = await this._pool.query(repliesQuery);
+    const result = await this._pool.query(query);
+    return result.rows[0];
+  }
 
-    const commentIds = commentsResult.rows.map(c => c.id);
+  async getCommentsByThreadId(threadId) {
+    const query = {
+      text: `
+        SELECT c.id, u.username, c.timestamp as date, c.content, c.is_delete
+        FROM t_comments c
+        JOIN users u ON c.owner = u.id
+        WHERE c.thread_id = $1
+        ORDER BY c.timestamp ASC
+      `,
+      values: [threadId],
+    };
 
-    const likeCountQuery = {
+    const result = await this._pool.query(query);
+    return result.rows;
+  }
+
+  async getRepliesByThreadId(threadId) {
+    const query = {
+      text: `
+        SELECT r.id, r.comment_id, r.timestamp AS date, r.content, r.is_deleted, u.username
+        FROM t_replies r
+        JOIN users u ON r.owner = u.id
+        WHERE r.thread_id = $1
+        ORDER BY r.timestamp ASC
+      `,
+      values: [threadId],
+    };
+
+    const result = await this._pool.query(query);
+    return result.rows;
+  }
+
+  async getLikeCountByCommentIds(commentIds) {
+    const query = {
       text: `
         SELECT comment_id, COUNT(*) AS like_count
         FROM t_comments_likes
@@ -65,16 +82,10 @@ class ThreadRepositoryPostgres extends ThreadRepository {
       values: [commentIds],
     };
 
-    const likeCountResult = await this._pool.query(likeCountQuery);
-
-    return {
-      thread: threadResult.rows[0],
-      comments: commentsResult.rows,
-      replies: repliesResult.rows,
-      likes: likeCountResult.rows
-    };
-  };
-
+    const result = await this._pool.query(query);
+    return result.rows;
+  }
+  
   async checkThreadExist(id) {
     const query = {
       text: 'SELECT * FROM t_threads WHERE id = $1',

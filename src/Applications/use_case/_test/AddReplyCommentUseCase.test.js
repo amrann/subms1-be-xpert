@@ -42,7 +42,13 @@ describe('AddReplyCommentUseCase', () => {
 
     expect(mockThreadRepository.checkThreadExist).toBeCalledWith(useCasePayload.threadId);
     expect(mockCommentRepository.checkCommentExist).toBeCalledWith(useCasePayload.commentId);
-    expect(addedReply).toStrictEqual(mockAddedReply);
+    expect(addedReply).toStrictEqual(new ReplyUser({
+      id: 'reply-123',
+      content: useCasePayload.content,
+      owner: useCasePayload.owner,
+      threadId: useCasePayload.threadId,
+      commentId: useCasePayload.commentId
+    }));
     expect(mockReplyRepository.addReply)
       .toBeCalledWith(new ReplyUser({
         content: useCasePayload.content,
