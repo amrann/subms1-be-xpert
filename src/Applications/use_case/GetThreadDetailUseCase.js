@@ -19,7 +19,6 @@ class GetThreadDetailUseCase {
       likeMap[item.comment_id] = Number(item.like_count);
     });
 
-    // 6. Rangkai replies ke comment masing-masing
     const commentWithReplies = comments.map((comment) => ({
       ...comment,
       likeCount: likeMap[comment.id] || 0,

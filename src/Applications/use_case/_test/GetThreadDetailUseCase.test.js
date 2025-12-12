@@ -3,109 +3,114 @@ const GetThreadDetailUseCase = require('../GetThreadDetailUseCase');
 
 describe('GetThreadDetailUseCase', () => {
   it('should orchestrate the get thread detail action correctly', async () => {
-    const mockDataFromRepository = {
-      thread: {
-        id: 'thread-123',
-        title: 'Thread Title',
-        body: 'Thread Body',
-        date: '2025-11-19T07:00:00.000Z',
-        username: 'dicoding',
-      },
-      comments: [
-        {
-          id: 'comment-1',
-          username: 'userA',
-          date: '2025-11-20T07:00:00.000Z',
-          content: 'Comment content',
-          is_delete: false,
-        },
-        {
-          id: 'comment-2',
-          username: 'userB',
-          date: '2025-11-21T07:00:00.000Z',
-          content: 'Comment deleted',
-          is_delete: true,
-        },
-      ],
-      replies: [
-        {
-          id: 'reply-1',
-          comment_id: 'comment-1',
-          content: 'Reply content',
-          is_deleted: false,
-          date: '2025-11-22T07:00:00.000Z',
-          username: 'userC',
-        },
-        {
-          id: 'reply-2',
-          comment_id: 'comment-2',
-          content: 'Reply deleted',
-          is_deleted: true,
-          date: '2025-11-22T07:10:00.000Z',
-          username: 'userD',
-        },
-      ],
-      likes: [
-        { comment_id: 'comment-1', like_count: '3' },
-        { comment_id: 'comment-2', like_count: '1' },
-      ],
-    };
+    const threadId = 'thread-123';
 
-    const expectedMappedThread = {
+    const mockThread = {
       id: 'thread-123',
       title: 'Thread Title',
       body: 'Thread Body',
-      date: '2025-11-19T07:00:00.000Z',
+      date: '2025-12-12T07:10:00.000Z',
       username: 'dicoding',
-      comments: [
-        {
-          id: 'comment-1',
-          username: 'userA',
-          date: '2025-11-20T07:00:00.000Z',
-          content: 'Comment content',
-          likeCount: 3,
-          replies: [
-            {
-              id: 'reply-1',
-              content: 'Reply content',
-              date: '2025-11-22T07:00:00.000Z',
-              username: 'userC',
-            },
-          ],
-        },
-        {
-          id: 'comment-2',
-          username: 'userB',
-          date: '2025-11-21T07:00:00.000Z',
-          content: '**komentar telah dihapus**',
-          likeCount: 1,
-          replies: [
-            {
-              id: 'reply-2',
-              content: '**balasan telah dihapus**',
-              date: '2025-11-22T07:10:00.000Z',
-              username: 'userD',
-            },
-          ],
-        },
-      ],
     };
+
+    const mockComments = [
+      {
+        id: 'comment-1',
+        username: 'userA',
+        content: 'Comment A',
+        date: '2024-12-10',
+        is_delete: false,
+      },
+      {
+        id: 'comment-2',
+        username: 'userB',
+        content: 'Comment B',
+        date: '2024-12-10',
+        is_delete: true
+      },
+    ];
+
+    const mockReplies = [
+      {
+        id: 'reply-1',
+        comment_id: 'comment-1',
+        username: 'userC',
+        content: 'Reply A1',
+        date: '2024-12-10',
+        is_deleted: false,
+      },
+      {
+        id: 'reply-2',
+        comment_id: 'comment-2',
+        username: 'userD',
+        content: 'Reply B1',
+        date: '2024-12-10',
+        is_deleted: true
+      },
+    ];
+
+    const mockLikes = [
+      { comment_id: 'comment-1', like_count: '2' }
+    ];
 
     const mockThreadRepository = new ThreadRepository();
 
-    mockThreadRepository.checkThreadExist = jest.fn()
-      .mockResolvedValue();
-    mockThreadRepository.getDetailThread = jest.fn()
-      .mockResolvedValue(mockDataFromRepository);
+    mockThreadRepository.checkThreadExist = jest.fn().mockResolvedValue();
+    mockThreadRepository.getThreadById = jest.fn().mockResolvedValue(mockThread);
+    mockThreadRepository.getCommentsByThreadId = jest.fn().mockResolvedValue(mockComments);
+    mockThreadRepository.getRepliesByThreadId = jest.fn().mockResolvedValue(mockReplies);
+    mockThreadRepository.getLikeCountByCommentIds = jest.fn().mockResolvedValue(mockLikes);
 
     const getThreadDetailUseCase = new GetThreadDetailUseCase({
       threadRepository: mockThreadRepository,
     });
 
-    const result = await getThreadDetailUseCase.execute('thread-123');
+    const result = await getThreadDetailUseCase.execute(threadId);
 
-    expect(mockThreadRepository.checkThreadExist).toBeCalledWith('thread-123');
-    expect(mockThreadRepository.getDetailThread).toBeCalledWith('thread-123');
-    expect(result).toStrictEqual(expectedMappedThread);
+    expect(mockThreadRepository.checkThreadExist).toBeCalledWith(threadId);
+    expect(mockThreadRepository.getThreadById).toBeCalledWith(threadId);
+    expect(mockThreadRepository.getCommentsByThreadId).toBeCalledWith(threadId);
+    expect(mockThreadRepository.getRepliesByThreadId).toBeCalledWith(threadId);
+    expect(mockThreadRepository.getLikeCountByCommentIds)
+      .toBeCalledWith(['comment-1', 'comment-2']);
+    expect(result).toMatchObject({
+      id: 'thread-123',
+      title: 'Thread Title',
+      body: 'Thread Body',
+      date: '2025-12-12T07:10:00.000Z',
+      username: 'dicoding',
+      comments: [
+        {
+          id: 'comment-1',
+          username: 'userA',
+          content: 'Comment A',
+          date: '2024-12-10',
+          likeCount: 2,
+          replies: [
+            {
+              id: 'reply-1',
+              content: 'Reply A1',
+              date: '2024-12-10',
+              username: 'userC'
+            }
+          ]
+        },
+        {
+          id: 'comment-2',
+          username: 'userB',
+          content: '**komentar telah dihapus**',
+          date: '2024-12-10',
+          likeCount: 0,
+          replies: [
+            {
+              id: 'reply-2',
+              content: '**balasan telah dihapus**',
+              date: '2024-12-10',
+              username: 'userD'
+            }
+          ]
+        }
+      ]
+    });
   });
 });
