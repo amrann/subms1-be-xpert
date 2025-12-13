@@ -27,6 +27,16 @@ const RepliesTableTestHelper = {
     return result.rows;
   },
 
+  async findTimestampRepliesById(id) {
+    const query = {
+      text: 'SELECT timestamp FROM t_replies WHERE id = $1',
+      values: [id],
+    };
+
+    const result = await pool.query(query);
+    return result.rows;
+  },
+
   async cleanTable() {
     await pool.query('DELETE FROM t_replies WHERE 1=1');
   },

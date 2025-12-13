@@ -26,6 +26,16 @@ const CommentsTableTestHelper = {
     return result.rows;
   },
 
+  async findTimestampCommentsById(id) {
+    const query = {
+      text: 'SELECT timestamp FROM t_comments WHERE id = $1',
+      values: [id],
+    };
+
+    const result = await pool.query(query);
+    return result.rows;
+  },
+
   async cleanTable() {
     await pool.query('DELETE FROM t_comments WHERE 1=1');
   },

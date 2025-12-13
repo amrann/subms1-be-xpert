@@ -27,6 +27,16 @@ const ThreadsTableTestHelper = {
     return result.rows;
   },
 
+  async findTimestampsThreadsById(id) {
+    const query = {
+      text: 'SELECT timestamps FROM t_threads WHERE id = $1',
+      values: [id],
+    };
+
+    const result = await pool.query(query);
+    return result.rows;
+  },
+
   async cleanTable() {
     await pool.query('DELETE FROM t_threads WHERE 1=1');
   },

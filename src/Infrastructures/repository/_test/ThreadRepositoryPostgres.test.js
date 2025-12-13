@@ -68,14 +68,24 @@ describe('ThreadRepositoryPostgres', () => {
         id: 'thread-123',
         title: 'title dari thread',
         body: 'body dari thread',
-        timestamp: '2025-11-09 03:31:59.941',
+        timestamp: '2025-11-09T03:31:59.941Z',
         owner: 'user-123', 
       });
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
 
-      // Action and Assert
-      await expect(threadRepositoryPostgres.getThreadById('thread-123')).resolves.not.toThrow();
+      // Action
+      const result = await threadRepositoryPostgres.getThreadById('thread-123');
+      const threadTime = await ThreadsTableTestHelper.findThreadsById('thread-123');
+
+      // Assert
+      await expect(result).toEqual({
+        id: 'thread-123',
+        title: 'title dari thread',
+        body: 'body dari thread',
+        date: threadTime[0].timestamp,
+        username: 'dicoding'
+      });
     });
   });
 
@@ -93,22 +103,34 @@ describe('ThreadRepositoryPostgres', () => {
         id: 'thread-123',
         title: 'title dari thread',
         body: 'body dari thread',
-        timestamp: '2025-11-09 03:31:59.941',
+        timestamp: '2025-11-09T03:31:59.941Z',
         owner: 'user-123', 
       });
 
       await CommentsTableTestHelper.addComment({ 
         id: 'comment-123',
         content: 'content dari comment',
-        timestamp: '2025-11-09 03:31:59.941',
+        timestamp: '2025-11-09T03:31:59.941Z',
         owner: 'user-123',
         threadId: 'thread-123'
       });
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
 
-      // Action and Assert
-      await expect(threadRepositoryPostgres.getCommentsByThreadId('comment-123')).resolves.not.toThrow();
+      // Action
+      const result = await threadRepositoryPostgres.getCommentsByThreadId('thread-123');
+      const commentTime = await CommentsTableTestHelper.findTimestampCommentsById('comment-123');
+
+      // Assert
+      await expect(result).toEqual([
+        {
+          id: 'comment-123',
+          username: 'dicoding',
+          date: commentTime[0].timestamp,
+          content: 'content dari comment',
+          is_delete: false,
+        }
+      ]);
     });
   });
 
@@ -149,8 +171,21 @@ describe('ThreadRepositoryPostgres', () => {
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
 
-      // Action and Assert
-      await expect(threadRepositoryPostgres.getRepliesByThreadId('reply-123')).resolves.not.toThrow();
+      // Action
+      const result = await threadRepositoryPostgres.getRepliesByThreadId('thread-123');
+      const replyTime = await RepliesTableTestHelper.findTimestampRepliesById('reply-123');
+
+      // Assert
+      await expect(result).toEqual([
+        {
+          id: 'reply-123',
+          comment_id: 'comment-123',
+          date: replyTime[0].timestamp,
+          content: 'content dari reply',
+          is_deleted: false,
+          username: 'dicoding',
+        }
+      ]);
     });
   });
 
@@ -168,7 +203,7 @@ describe('ThreadRepositoryPostgres', () => {
         id: 'thread-123',
         title: 'title dari thread',
         body: 'body dari thread',
-        timestamp: '2025-11-09 03:31:59.941',
+        timestamp: '2025-11-09T03:31:59.941',
         owner: 'user-123', 
       });
 
@@ -196,7 +231,7 @@ describe('ThreadRepositoryPostgres', () => {
       // Assert
       expect(result[0]).toEqual({
         comment_id: 'comment-123',
-        like_count: '1', // PostgreSQL returns count as string
+        like_count: '1'
       });
     });
   });
@@ -244,7 +279,7 @@ describe('ThreadRepositoryPostgres', () => {
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
 
       // Action and Assert
-      await expect(threadRepositoryPostgres.checkThreadExist('thread-123')).resolves.not.toThrow();
+      await expect(threadRepositoryPostgres.checkThreadExist('thread-123')).resolves.not.toThrow(NotFoundError);
     });
   });
 });
